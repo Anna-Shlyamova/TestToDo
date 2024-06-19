@@ -1,58 +1,60 @@
-import './App.css'
-import {Box, Typography} from '@mui/material';
+import "./App.css";
+import { Box, Typography } from "@mui/material";
 import UsersListItem from "./components/UsersListItem/UsersListItem.tsx";
 import StandartButton from "./components/StandartButton/StandartButton.tsx";
-import {useEffect, useState} from "react";
+import { useEffect, useState } from "react";
 import AddOrUpdateUserModal from "./components/modals/AddOrUpdateUserModal.tsx";
 
 export type User = {
-  id: string,
-  name: string,
-  age: number,
-}
-const testUsers: Array<User> = [
-  {
-    id: 'dfvfv234535b',
-    name: 'John',
-    age: 20,
-  },
-  {
-    id: 'gt4545nio84429',
-    name: 'Jill',
-    age: 12,
-  },
-  {
-    id: 'ebe5345gdbdb',
-    name: 'Adam',
-    age: 45,
-  },
-  {
-    id: 'ergddfbxrgsc',
-    name: 'Helen',
-    age: 34,
-  },
-]
+  id: string;
+  name: string;
+  age: number;
+};
 
-async function fetchUsers() {
-  try{
-    const result = await fetch('http://192.168.32.181:8082/structr/rest/UserType', {
-      method: 'GET',
-      //credentials: 'include'
-    });
-    const users: Array<User> = (await result.json()).result.forEach(user => {
-      users.push({id: user.id, name: user.name, age: user.age})
-    });
-    return users;
+const fetchUsers = async () => {
+  try {
+    const data = await fetch(
+      "http://192.168.32.181:8082/structr/rest/UserType"
+    );
+
+    const dataJson = await data.json();
+    return dataJson.result;
   } catch (error) {
     console.error(error);
   }
-}
+};
+
+const deleteUser = (id: string) => {
+  return fetch(`http://192.168.32.181:8082/structr/rest/UserType/${id}`, {
+    method: "DELETE",
+  });
+};
+
+const updateUser = (id: string, body: any) => {
+  return fetch(`http://192.168.32.181:8082/structr/rest/UserType/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(body),
+  });
+};
+
+const createUser = (body: any) => {
+  return fetch(`http://192.168.32.181:8082/structr/rest/UserType`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+};
+
 function App() {
-  const [context, setContext] = useState<{mode: 'add' | 'update' | null, node?: User}>({mode: null});
+  const [context, setContext] = useState<{
+    mode: "add" | "update" | null;
+    node?: User;
+  }>({ mode: null });
+
   const [users, setUsers] = useState<Array<User>>([]);
-  async function getUsers(){
+
+  async function getUsers() {
     const loadedUsers = await fetchUsers();
-    if(loadedUsers){
+    if (loadedUsers) {
       setUsers(loadedUsers);
     }
   }
@@ -61,23 +63,58 @@ function App() {
   }, []);
 
   const handleModalClose = () => {
-    setContext({mode: null});
+    setContext({ mode: null });
   };
 
   return (
     <>
       <Typography>Users List</Typography>
       <Box>
-        {users.map(user=>
-        <UsersListItem user={user} onDelete={()=>{}} onEdit={()=>{setContext({mode: 'update', node: user})}}/>
-        )}
+        {users.map((user, i) => (
+          <UsersListItem
+            key={user.name + i}
+            user={user}
+            onDelete={() => {
+              deleteUser(user.id).then(() => fetchUsers());
+            }}
+            onEdit={() => {
+              setContext({ mode: "update", node: user });
+            }}
+          />
+        ))}
       </Box>
-      <StandartButton onClick={()=>{setContext({mode: 'add'})}}>Add user</StandartButton>
-      {context.mode &&
-        <AddOrUpdateUserModal open={true} context={context} onClose={handleModalClose} onSubmit={()=>{}}/>
-      }
+      <StandartButton
+        onClick={() => {
+          setContext({ mode: "add" });
+        }}
+      >
+        Add user
+      </StandartButton>
+      {context.mode && (
+        <AddOrUpdateUserModal
+          open={true}
+          context={context}
+          onClose={handleModalClose}
+          onSubmit={(values) => {
+            const newVal = {
+              name: values.name,
+              old: values.age,
+            };
+
+            if (context.mode === "add") {
+              createUser(newVal)
+                .then(() => getUsers())
+                .finally(() => handleModalClose());
+            } else if (context.mode === "update") {
+              updateUser(values.id, newVal)
+                .then(() => getUsers())
+                .finally(() => handleModalClose());
+            }
+          }}
+        />
+      )}
     </>
-  )
+  );
 }
 
-export default App
+export default App;
