@@ -2,7 +2,7 @@ import './App.css'
 import {Box, Typography} from '@mui/material';
 import UsersListItem from "./components/UsersListItem/UsersListItem.tsx";
 import StandartButton from "./components/StandartButton/StandartButton.tsx";
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import AddOrUpdateUserModal from "./components/modals/AddOrUpdateUserModal.tsx";
 
 export type User = {
@@ -32,8 +32,34 @@ const testUsers: Array<User> = [
     age: 34,
   },
 ]
+
+async function fetchUsers() {
+  try{
+    const result = await fetch('http://192.168.32.181:8082/structr/rest/UserType', {
+      method: 'GET',
+      //credentials: 'include'
+    });
+    const users: Array<User> = (await result.json()).result.forEach(user => {
+      users.push({id: user.id, name: user.name, age: user.age})
+    });
+    return users;
+  } catch (error) {
+    console.error(error);
+  }
+}
 function App() {
   const [context, setContext] = useState<{mode: 'add' | 'update' | null, node?: User}>({mode: null});
+  const [users, setUsers] = useState<Array<User>>([]);
+  async function getUsers(){
+    const loadedUsers = await fetchUsers();
+    if(loadedUsers){
+      setUsers(loadedUsers);
+    }
+  }
+  useEffect(() => {
+    getUsers().then();
+  }, []);
+
   const handleModalClose = () => {
     setContext({mode: null});
   };
@@ -42,7 +68,7 @@ function App() {
     <>
       <Typography>Users List</Typography>
       <Box>
-        {testUsers.map(user=>
+        {users.map(user=>
         <UsersListItem user={user} onDelete={()=>{}} onEdit={()=>{setContext({mode: 'update', node: user})}}/>
         )}
       </Box>
