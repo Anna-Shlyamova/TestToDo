@@ -1,43 +1,44 @@
 import "./App.css";
-import { Box, Typography } from "@mui/material";
-import UsersListItem from "./components/UsersListItem/UsersListItem.tsx";
+import {Box, List, ListItem, Typography} from "@mui/material";
+import OrdersListItem from "./components/UsersListItem/OrdersListItem.tsx";
 import { Button } from "@mui/material";
 import { useEffect, useState } from "react";
-import AddOrUpdateUserModal from "./components/modals/AddOrUpdateUserModal.tsx";
+import AddOrUpdateOrderModal from "./components/modals/AddOrUpdateOrderModal.tsx";
 
-export type User = {
+export type Order = {
   id: string;
   name: string;
-  // age: number;
-  old?: number;
+  price: number;
+  priceHistory: Array<number>;
 };
 
-const url = "http://192.168.32.181:8082/structr/rest/UserType";
+const url = "http://192.168.32.181:8082/structr/rest/OrdersType";
 
-const fetchUsers = async () => {
+const fetchOrders = async () => {
   try {
     const data = await fetch(url);
     const dataJson = await data.json();
+    console.log(dataJson.result);
     return dataJson.result;
   } catch (error) {
     console.error(error);
   }
 };
 
-const deleteUser = (id: string) => {
+const deleteOrder = (id: string) => {
   return fetch(`${url}/${id}`, {
     method: "DELETE",
   });
 };
 
-const updateUser = (id: string, body: any) => {
+const updateOrder = (id: string, body: any) => {
   return fetch(`${url}/${id}`, {
     method: "PUT",
     body: JSON.stringify(body),
   });
 };
 
-const createUser = (body: any) => {
+const createOrder = (body: any) => {
   return fetch(url, {
     method: "POST",
     body: JSON.stringify(body),
@@ -47,38 +48,46 @@ const createUser = (body: any) => {
 function App() {
   const [context, setContext] = useState<{
     mode: "add" | "update" | null;
-    node?: User;
+    node?: Order;
   }>({ mode: null });
 
-  const [users, setUsers] = useState<Array<User>>([]);
+  const [orders, setOrders] = useState<Array<Order>>([]);
 
-  async function getUsers() {
-    const loadedUsers = await fetchUsers();
-    if (loadedUsers) {
-      setUsers(loadedUsers);
+  async function getOrders() {
+    const loadedOrders = await fetchOrders();
+    if (loadedOrders) {
+      setOrders(loadedOrders);
     }
   }
   useEffect(() => {
-    getUsers().then();
+    getOrders().then();
   }, []);
 
   const handleModalClose = () => {
     setContext({ mode: null });
   };
 
+  const randomPriceHistory = () =>{
+      return Array.from({length: 10}, () => Math.floor(Math.random() * 100));
+  }
   return (
     <>
-      <Typography>Users List</Typography>
+      <Typography>Orders List</Typography>
+      <List sx={{display:"flex", flexDirection: 'row', justifyContent: "flex-start", paddingRight: "230px"}}>
+        <ListItem sx={{padding:0}}>Name</ListItem>
+        <ListItem sx={{padding:0}}>Price</ListItem>
+        <ListItem sx={{padding:0}}>PriceHistory</ListItem>
+      </List>
       <Box>
-        {users.map((user, i) => (
-          <UsersListItem
-            key={user.name + i}
-            user={user}
+        {orders.map((order, i) => (
+          <OrdersListItem
+            key={order.name + i}
+            order={order}
             onDelete={() => {
-              deleteUser(user.id).then(() => getUsers());
+              deleteOrder(order.id).then(() => getOrders());
             }}
             onEdit={() => {
-              setContext({ mode: "update", node: user });
+              setContext({ mode: "update", node: order });
             }}
           />
         ))}
@@ -89,26 +98,27 @@ function App() {
           setContext({ mode: "add" });
         }}
       >
-        Add user
+        Add order
       </Button>
       {context.mode && (
-        <AddOrUpdateUserModal
+        <AddOrUpdateOrderModal
           open={true}
           context={context}
           onClose={handleModalClose}
           onSubmit={(values) => {
             const newVal = {
               name: values.name,
-              old: Number(values.old),
+              price: Number(values.price),
+              priceHistory: randomPriceHistory(),
             };
 
             if (context.mode === "add") {
-              createUser(newVal)
-                .then(() => getUsers())
+              createOrder(newVal)
+                .then(() => getOrders())
                 .finally(() => handleModalClose());
             } else if (context.mode === "update") {
-              updateUser(values.id, newVal)
-                .then(() => getUsers())
+              updateOrder(values.id, newVal)
+                .then(() => getOrders())
                 .finally(() => handleModalClose());
             }
           }}

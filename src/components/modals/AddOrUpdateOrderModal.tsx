@@ -1,7 +1,7 @@
 import { FC } from "react";
 import { Box, Modal, TextField, Typography } from "@mui/material";
 import StandartButton from "../StandartButton/StandartButton.tsx";
-import { User } from "../../App.tsx";
+import { Order } from "../../App.tsx";
 import { Controller, FieldErrors, Resolver, useForm } from "react-hook-form";
 
 const ModalMixin = {
@@ -40,30 +40,31 @@ const TextFieldMixin = {
 };
 interface AddUserModalProps {
   open: boolean;
-  context: { mode: "add" | "update" | null; node?: User };
+  context: { mode: "add" | "update" | null; node?: Order };
   onClose: () => void;
-  onSubmit: (value: User) => void;
+  onSubmit: (value: Order) => void;
 }
-const AddOrUpdateUserModal: FC<AddUserModalProps> = ({
+const AddOrUpdateOrderModal: FC<AddUserModalProps> = ({
   open = false,
   onClose,
   onSubmit,
   context,
 }) => {
-  const formValues: User = {
+  const formValues: Order = {
     id: String(context.node?.id ?? ""),
     name: context.node?.name ?? "",
-    old: context.node?.old ?? 0,
+    price: context.node?.price ?? 0,
+    priceHistory: context.node?.priceHistory ?? [],
   };
-  const resolver: Resolver<User> = (values) => {
-    const errors: FieldErrors<User> = {};
+  const resolver: Resolver<Order> = (values) => {
+    const errors: FieldErrors<Order> = {};
     if (values.name.trim().length === 0) {
       errors.name = { type: "required", message: "Имя не может быть пустым" };
     }
     return { values, errors };
   };
 
-  const { control, handleSubmit } = useForm<User>({
+  const { control, handleSubmit } = useForm<Order>({
     defaultValues: formValues,
     resolver,
     mode: "onChange",
@@ -77,7 +78,7 @@ const AddOrUpdateUserModal: FC<AddUserModalProps> = ({
           component="h2"
           sx={{ paddingBottom: "15px" }}
         >
-          {context.mode === "add" ? "Add user" : "Update user"}
+          {context.mode === "add" ? "Add order" : "Update order"}
         </Typography>
         <form onSubmit={handleSubmit(onSubmit)}>
           <Controller
@@ -102,15 +103,15 @@ const AddOrUpdateUserModal: FC<AddUserModalProps> = ({
                 name={name}
                 value={value}
                 onChange={onChange}
-                label={"old"}
+                label={"price"}
                 fullWidth
               />
             )}
-            name={"old"}
+            name={"price"}
           />
           <Box sx={{ paddingTop: "10px" }}>
             <StandartButton type={"submit"}>
-              {context.mode === "add" ? "Add user" : "Update user"}
+              {context.mode === "add" ? "Add order" : "Update order"}
             </StandartButton>
             <StandartButton onClick={onClose}>Close</StandartButton>
           </Box>
@@ -120,4 +121,4 @@ const AddOrUpdateUserModal: FC<AddUserModalProps> = ({
   );
 };
 
-export default AddOrUpdateUserModal;
+export default AddOrUpdateOrderModal;
