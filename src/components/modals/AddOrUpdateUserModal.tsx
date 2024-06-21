@@ -53,7 +53,7 @@ const AddOrUpdateUserModal: FC<AddUserModalProps> = ({
   const formValues: User = {
     id: String(context.node?.id ?? ""),
     name: context.node?.name ?? "",
-    age: context.node?.age ?? 0,
+    old: context.node?.old ?? 0,
   };
   const resolver: Resolver<User> = (values) => {
     const errors: FieldErrors<User> = {};
@@ -102,11 +102,11 @@ const AddOrUpdateUserModal: FC<AddUserModalProps> = ({
                 name={name}
                 value={value}
                 onChange={onChange}
-                label={"Age"}
+                label={"old"}
                 fullWidth
               />
             )}
-            name={"age"}
+            name={"old"}
           />
           <Box sx={{ paddingTop: "10px" }}>
             <StandartButton type={"submit"}>

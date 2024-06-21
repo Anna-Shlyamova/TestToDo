@@ -1,22 +1,22 @@
 import "./App.css";
 import { Box, Typography } from "@mui/material";
 import UsersListItem from "./components/UsersListItem/UsersListItem.tsx";
-import StandartButton from "./components/StandartButton/StandartButton.tsx";
+import { Button } from "@mui/material";
 import { useEffect, useState } from "react";
 import AddOrUpdateUserModal from "./components/modals/AddOrUpdateUserModal.tsx";
 
 export type User = {
   id: string;
   name: string;
-  age: number;
+  // age: number;
+  old?: number;
 };
+
+const url = "http://192.168.32.181:8082/structr/rest/UserType";
 
 const fetchUsers = async () => {
   try {
-    const data = await fetch(
-      "http://192.168.32.181:8082/structr/rest/UserType"
-    );
-
+    const data = await fetch(url);
     const dataJson = await data.json();
     return dataJson.result;
   } catch (error) {
@@ -25,20 +25,20 @@ const fetchUsers = async () => {
 };
 
 const deleteUser = (id: string) => {
-  return fetch(`http://192.168.32.181:8082/structr/rest/UserType/${id}`, {
+  return fetch(`${url}/${id}`, {
     method: "DELETE",
   });
 };
 
 const updateUser = (id: string, body: any) => {
-  return fetch(`http://192.168.32.181:8082/structr/rest/UserType/${id}`, {
+  return fetch(`${url}/${id}`, {
     method: "PUT",
     body: JSON.stringify(body),
   });
 };
 
 const createUser = (body: any) => {
-  return fetch(`http://192.168.32.181:8082/structr/rest/UserType`, {
+  return fetch(url, {
     method: "POST",
     body: JSON.stringify(body),
   });
@@ -75,7 +75,7 @@ function App() {
             key={user.name + i}
             user={user}
             onDelete={() => {
-              deleteUser(user.id).then(() => fetchUsers());
+              deleteUser(user.id).then(() => getUsers());
             }}
             onEdit={() => {
               setContext({ mode: "update", node: user });
@@ -83,13 +83,14 @@ function App() {
           />
         ))}
       </Box>
-      <StandartButton
+      <Button
+        variant="contained"
         onClick={() => {
           setContext({ mode: "add" });
         }}
       >
         Add user
-      </StandartButton>
+      </Button>
       {context.mode && (
         <AddOrUpdateUserModal
           open={true}
@@ -98,7 +99,7 @@ function App() {
           onSubmit={(values) => {
             const newVal = {
               name: values.name,
-              old: values.age,
+              old: Number(values.old),
             };
 
             if (context.mode === "add") {
